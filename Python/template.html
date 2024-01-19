@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- MDB -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.3.0/mdb.min.css"
+      rel="stylesheet"
+    />
+    <style>
+        .heading{
+            grid-column: 1 / span 4;
+        }
+      .strain-plots {
+        display: grid;
+        grid-template-columns: repeat(4, auto);
+        grid-gap: 5px;
+        margin: 10px;
+      }
+      .output {
+        display: grid;
+        grid-template-columns: repeat(4, auto);
+        grid-gap: 5px;
+        margin: 10px;
+      }
+      img {
+        width: 100%;
+        height: auto;
+        border: solid 1px grey;
+        border-radius: 10px;
+      }
+      .disabled {
+        opacity: 0.2;
+      }
+      img[status]{
+        border: solid 4px orangered;
+        zoom: 1.5;
+      }
+      th, td{
+        padding:3px;
+        border: solid 1px grey;
+      }
+    </style>
+    <title>Document</title>
+  </head>
+  <body>
+    
+    <div class="container">
+        <button class="btn btn-primary mt-1" id="process">Process</button>
+
+      <!-- Tabs navs -->
+      <ul class="nav nav-tabs mb-3" id="strains" role="tablist">
+        {%for strain in data %} {% if strain==1 %}
+        <li class="nav-item" role="presentation">
+          <a
+            class="nav-link active"
+            id="strain-{{strain}}"
+            data-mdb-toggle="tab"
+            href="#strains-content-{{strain}}"
+            role="tab"
+            aria-controls="strains{{strain}}1"
+            aria-selected="true"
+            >{{data[strain]['name']}}</a
+          >
+        </li>
+        {% else %}
+        <li class="nav-item" role="presentation">
+          <a
+            class="nav-link"
+            id="strain-{{strain}}"
+            data-mdb-toggle="tab"
+            href="#strains-content-{{strain}}"
+            role="tab"
+            aria-controls="strains{{strain}}2"
+            aria-selected="false"
+            >{{data[strain]['name']}}</a
+          >
+        </li>
+        {% endif %} {% endfor %}
+        <li class="nav-item" role="presentation">
+            <a
+              class="nav-link"
+              id="result-tab"
+              data-mdb-toggle="tab"
+              href="#results-content"
+              role="tab"
+              aria-controls="result-tab"
+              aria-selected="false"
+              >Pre-Final CSV Output</a
+            >
+        </li>
+        <li class="nav-item" role="presentation">
+          <a
+            class="nav-link"
+            id="pref-final-output-tab"
+            data-mdb-toggle="tab"
+            href="#pre-final-output-content"
+            role="tab"
+            aria-controls="pre-final-output-tab"
+            aria-selected="false"
+            >Pre-Final Output</a
+          >
+        </li>      
+        <li class="nav-item" role="presentation">
+          <a
+            class="nav-link"
+            id="final-result-tab"
+            data-mdb-toggle="tab"
+            href="#final-csv-results-content"
+            role="tab"
+            aria-controls="final-result-tab"
+            aria-selected="false"
+            >Final CSV Results</a
+          >
+        </li>
+          <!-- <li class="nav-item" role="presentation">
+            <a
+              class="nav-link"
+              id="table-output-tab"
+              data-mdb-toggle="tab"
+              href="#table-content"
+              role="tab"
+              aria-controls="table-output"
+              aria-selected="false"
+              >Tables</a
+            >
+          </li> -->
+      </ul>
+      <!-- Tabs navs -->
+
+      <!-- Tabs content -->
+      <div class="tab-content" id="strains-content">
+        {%for strain in data %} 
+        {% if strain==1 %}
+        <div
+          class="tab-pane fade show active"
+          id="strains-content-{{strain}}"
+          role="tabpanel"
+          aria-labelledby="strain-{{strain}}"
+        >
+        {% else %}
+        <div
+          class="tab-pane fade"
+          id="strains-content-{{strain}}"
+          role="tabpanel"
+          aria-labelledby="strain-{{strain}}"
+        >
+        {% endif %}
+        <div class="strain-plots">
+            {%for sign in data[strain] %} 
+              {%for plot in data[strain][sign] %}
+              <div class="plot-images">
+                <img
+                  pos="org"
+                  src="{{plot['src']}}"
+                  plot="{{plot['pos']}}"
+                  strain="{{strain}}"
+                  sign="{{sign}}"
+                  strain-name="{{data[strain]['name']}}"
+                />
+              </div>
+              {% endfor%} 
+            {% endfor %}
+          </div>
+        </div>
+
+        
+         {% endfor %}
+        </div>
+
+         <div
+          class="tab-pane fade"
+          id="results-content"
+          role="tabpanel"
+          aria-labelledby="results-content"
+        >1</div>
+        <div
+          class="tab-pane fade"
+          id="pre-final-output-content"
+          role="tabpanel"
+          aria-labelledby="pre-final-output-content"
+        >2</div>
+        <div
+          class="tab-pane fade"
+          id="table-content"
+          role="tabpanel"
+          aria-labelledby="table-content"
+        >
+        </div>
+      <!-- Tabs content -->
+    </div>
+
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.7.0.min.js"
+      integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
+      crossorigin="anonymous"
+    ></script>
+    <!-- MDB -->
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.3.0/mdb.min.js"
+    ></script>
+    <script>
+      $(".plot-images").click((ev) => {
+        toggleState(ev.target);
+        process();
+      });
+
+      function toggleState(el){
+        let element = $(el);
+        if (element.attr("status")) {
+          element.removeAttr("status");
+        } else {
+          element.attr("status", "active");
+        }
+      }
+
+      function addToCSVTable(el){
+        let strain=el.attr('strain');
+        let plot=el.attr('plot');
+        let sign=el.attr('sign');
+
+      }
+
+      function removeFromCSVTable(el){
+
+      }
+
+    </script>
+  </body>
+</html>

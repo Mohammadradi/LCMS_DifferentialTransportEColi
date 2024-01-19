@@ -1,0 +1,152 @@
+{% extends "template2.html" %} 
+
+{% block style %} 
+{% include "style.css" %} 
+{% endblock %} 
+
+{% block content %}
+<main>
+  
+  <!--strains -->
+  {% for strain in data %}
+  {% if strain == 1 %}
+  <input id="strain{{strain}}" type="radio" name="strains" checked>
+  <label for="strain{{strain}}">{{data[strain]['name']}}</label>
+  {% else %}
+  <input id="strain{{strain}}" type="radio" name="strains">
+  <label for="strain{{strain}}">{{data[strain]['name']}}</label>
+  {% endif %}
+  {% endfor %}
+
+  <!-- output tabs -->
+  <input id="prefinal-csv" type="radio" name="strains"/>
+  <label for="prefinal-csv">Prefinal CSV</label>
+  <input id="prefinal-plots" type="radio" name="strains"/>
+  <label for="prefinal-plots">Prefinal Plots</label>
+  <input id="final-csv" type="radio" name="strains"/>
+  <label for="final-csv">Final CSV</label>
+  <input id="final-plots" type="radio" name="strains"/>
+  <label for="final-plots">Final Plots</label>
+  <input id="tables" type="radio" name="strains"/>
+  <label for="tables">Tables</label>
+  <!-- end of output tabs -->
+
+
+
+  <!-- End ofstrains -->
+    
+  <!--strain Content -->
+  {% for strain in data %}
+  <section id="content{{strain}}">
+    <div class="strain-plots row">
+        {% for plot in data[strain]['neg'] %}
+        <div class="plot-image col-md-3 mb-3">
+          <img
+            id="{{strain}}-{{plot['pos']}}-neg-img"
+            src="{{plot['src']}}"
+            plot="{{plot['pos']}}"
+            strain="{{strain}}"
+            sign="neg"
+            strain-name="{{data[strain]['name']}}"
+            compound-name="{{detailed[strain]['neg'][plot['pos']]['name']}}"
+            formula="{{detailed[strain]['neg'][plot['pos']]['formula']}}"
+            level="{{detailed[strain]['neg'][plot['pos']]['level']}}"
+            onclick=toggleState(this)
+            stage="prefinal"
+          />
+        </div>
+        {% endfor %}
+
+        {% for plot in data[strain]['pos'] %}
+        <div class="plot-image col-md-3 mb-3">
+          <img
+            id="{{strain}}-{{plot['pos']}}-pos-img"
+            src="{{plot['src']}}"
+            plot="{{plot['pos']}}"
+            strain="{{strain}}"
+            sign="pos"
+            strain-name="{{data[strain]['name']}}"
+            compound-name="{{detailed[strain]['pos'][plot['pos']]['name']}}"
+            formula="{{detailed[strain]['pos'][plot['pos']]['formula']}}"
+            level="{{detailed[strain]['pos'][plot['pos']]['level']}}"
+            onclick=toggleState(this)
+            stage="prefinal"
+          />
+        </div>
+        {% endfor %}
+
+    </div>
+  </section>
+  {% endfor %}
+
+  <!-- output sections -->
+  <section id="prefinal-csv-content">
+    <div id="prefinal-list">
+      {% for strain in data %}
+      <h5 class="p-2 bg-primary text-light">{{data[strain]['name']}}</h5>
+      <div id="prefinal-csv-{{strain}}">
+        <table class="mb-2">
+          <thead>
+            <tr>
+              <th>Strain</th>
+              <th>Plot</th>
+              <th>Sign</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section id="prefinal-plots-content">
+    {% for strain in data %}
+    <h5 class="p-2 bg-primary text-light">{{data[strain]['name']}}</h5>
+    <div class="strain-plots row" id="prefinal-{{strain}}"></div>
+    {% endfor %}
+  </section>
+  <section id="final-csv-content">
+    {% for strain in data %}
+      <h5 class="p-2 bg-primary text-light">{{data[strain]['name']}}</h5>
+      <div id="final-list-{{strain}}">
+        <table class="mb-2">
+          <thead>
+            <tr>
+              <th>Strain</th>
+              <th>Plot</th>
+              <th>Sign</th>
+              <th>Possible Direction</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      {% endfor %}
+  </section>
+  <section id="final-plots-content">
+    {% for strain in data %}
+    <h5 class="p-2 bg-primary text-light">{{data[strain]['name']}}</h5>
+    <div class="strain-plots row" id="final-{{strain}}"></div>
+    {% endfor %}
+  </section>
+
+  <section id="final-tables">
+    <table class="mb-2">
+      <thead>
+        <tr>
+          <th>Strain</th>
+          <th>Compound (level)</th>
+          <th>Possible Direction</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </section>
+  
+  <!-- End of Output sections -->
+
+  <!-- End ofstrain Content -->
+</main>
+{% endblock %}

@@ -1,0 +1,218 @@
+x<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- MDB -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.3.0/mdb.min.css"
+      rel="stylesheet"
+    />
+    {% block style %}{% endblock %}
+    <title>Compound Selector</title>
+  </head>
+  <body>
+    {% block content %} {% endblock %}
+
+    <script
+      src="https://code.jquery.com/jquery-3.7.0.min.js"
+      integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
+      crossorigin="anonymous"
+    ></script>
+    <!-- MDB -->
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.3.0/mdb.min.js"
+    ></script>
+    <script>
+
+      function toggleState(el) {
+        let element = $(el);
+        let strain = element.attr("strain");
+        let plot = element.attr("plot");
+        let sign = element.attr("sign");
+        let stage = element.attr("stage");
+
+        if(stage=="none"){
+          return;
+        }
+
+        if (element.attr("status")) {
+          element.removeAttr("status");
+          removeFromCSVTable(element, strain, plot, sign, stage);
+          removeSelectedImage(element, strain, plot, sign, stage);
+        } else {
+          element.attr("status", "active");
+          addToCSVTable(element, strain, plot, sign, stage);
+          addSelectedImage(element, strain, plot, sign, stage);
+        }
+      }
+
+      function addToCSVTable(el, strain, plot, sign, stage) {
+        id = `${strain}-${plot}-${sign}-${stage}-csv`; 
+        data = `
+        <tr id=${id}>
+          <td>${strain}</td>
+          <td>${plot}</td>
+          <td>${sign}</td>
+        </tr>`
+        if(stage=='prefinal'){
+          $(`#prefinal-csv-${strain} table tbody`).append(data);
+        }else{
+          let transport = 'Not selected';
+          let priority = 'No';
+          let input_name = `${strain}-${plot}-${sign}`
+          if($(`input[name=${input_name}]`)[0].checked){
+            transport = 'Import';
+          }
+          else if($(`input[name=${input_name}]`)[1].checked){
+            transport = 'Export';
+          }
+          let pri_name = `${strain}-${plot}-${sign}-pri`;
+          console.log(pri_name);
+          if($(`input[name=${pri_name}]`)[0].checked){
+            priority = 'Yes';
+          }
+          console.log(priority);
+          data = `
+          <tr id=${id}>
+            <td>${strain}</td>
+            <td>${plot}</td>
+            <td>${sign}</td>
+            <td>${transport}</td>
+            <td>${priority}</td>
+          </tr>`
+          $(`#final-list-${strain} table tbody`).append(data);
+
+
+          let final_table_row_id = `${id}-final-row`
+          let image_id = `#${strain}-${plot}-${sign}-img`
+          let compound = $(image_id).attr('compound-name')  
+          let level = $(image_id).attr('level')
+          let strain_name = $(image_id).attr('strain-name')
+
+          data = `<tr id=${final_table_row_id}>
+            <td>${strain_name}</td>
+            <td>${compound} (${level})</td>
+            <td>${transport}</td>
+          </tr>`
+          $('#final-tables table tbody').append(data);
+        }
+      }
+
+      function removeFromCSVTable(el, strain, plot, sign, stage) {
+        id = strain + '-' + plot + '-' + sign + '-' + stage + '-csv'; 
+        table_row_id = `tr[id="${strain}-${plot}-${sign}-final-csv-final-row"]`
+        // console.log(table_row_id);
+        if(stage=='prefinal'){
+          $('#' + id).remove();
+          id = strain + '-' + plot + '-' + sign + '-final-csv'; 
+          $('#' + id).remove();
+          $(table_row_id).remove();
+        }else{
+          $('#' + id).remove();
+          $(table_row_id).remove();
+        }
+      }
+
+      function addSelectedImage(el, strain, plot, sign, stage){
+        id = strain + '-' + plot + '-' + sign + '-' + stage; 
+        
+        let src = el.attr("src");
+
+        if(stage=='prefinal'){
+          let divID = 'prefinal-' + strain;
+          let im = `<div class="form-check"><span>IM</span><input strain=${strain} plot=${plot} sign=${sign} onclick=UpdateFinal(this) class="IM-EX form-check-input" type=radio name='${strain}-${plot}-${sign}' value="IM"'/></div>`
+          let ex = `<div class="form-check"><span>EX</span><input strain=${strain} plot=${plot} sign=${sign} onclick=UpdateFinal(this) class="IM-EX form-check-input" type=radio name='${strain}-${plot}-${sign}' value="EX"'/></div>`
+          let pri = `<div class="form-check"><span>EX</span><input strain=${strain} plot=${plot} sign=${sign} onclick=UpdateFinal(this) class="IM-EX form-check-input" type=check name='${strain}-${plot}-${sign}-priority' value="PRI"'/></div>`
+
+          let btn = `
+          <div class="btn-group">
+            <input type="radio" class="btn-check" id="${strain}-${plot}-${sign}-IM" strain=${strain} plot=${plot} sign=${sign} onclick=UpdateFinal(this) name=${strain}-${plot}-${sign} autocomplete="off" />
+            <label class="btn btn-secondary" for="${strain}-${plot}-${sign}-IM">IM</label>
+
+            <input type="radio" class="btn-check" id="${strain}-${plot}-${sign}-EX" strain=${strain} plot=${plot} sign=${sign} onclick=UpdateFinal(this) name=${strain}-${plot}-${sign} autocomplete="off" />
+            <label class="btn btn-secondary" for="${strain}-${plot}-${sign}-EX">EX</label>
+
+            <input type="checkbox" class="btn-check" id="${strain}-${plot}-${sign}-PRI" strain=${strain} plot=${plot} sign=${sign} onclick=UpdateFinal(this) name=${strain}-${plot}-${sign}-pri autocomplete="off" />
+            <label class="btn btn-secondary" for="${strain}-${plot}-${sign}-PRI">PRI</label>
+          </div>
+          `
+          $('#' + divID).append('<div id=' + id +  ' class="plot-image col-md-3 mb-3"><img height=200 src='+ src + ' strain=' + strain + ' plot=' + plot + ' sign=' + sign + ' stage=final onclick=toggleState(this) />' + btn + '</div>')
+        }else if(stage=='final'){
+          let divID = 'final-' + strain;
+          
+          $('#' + divID).append('<div id=' + id +  ' class="plot-image col-md-3 mb-3 "><img height=200  src='+ src + ' strain=' + strain + ' plot=' + plot + ' sign=' + sign + ' stage=none onclick=toggleState(this) /></div>')
+
+        }
+      }
+
+      function GetTransport(name){
+        let transport = 'Not selected';
+        try {
+          if($(`input[name=${name}]`)[0].checked){
+            transport = 'Import';
+          }
+          else if($(`input[name=${name}]`)[1].checked){
+            transport = 'Export';
+          }
+        } catch (error) { 
+        }
+        return transport;
+      }
+
+      function UpdateFinal(el){
+        let name = $(el).attr('name');
+        let strain = $(el).attr('strain');
+        let plot = $(el).attr('plot');
+        let sign = $(el).attr('sign');
+        let selector = `#${name}-final-csv td:nth-child(4)`
+
+        let transport = GetTransport(name);
+        $(selector).text(transport) 
+        table_data_id = `#${strain}-${plot}-${sign}-final-csv-final-row td:nth-child(3)`
+        $(table_data_id).text(transport);
+        
+
+        //process checkbox for priority
+        let sel = `${strain}-${plot}-${sign}-PRI`;
+        table_data_id = `#${strain}-${plot}-${sign}-final-csv td:nth-child(5)`;
+        console.log(sel)
+        console.log(document.getElementById(sel))
+        if(document.getElementById(sel).checked){
+          $(table_data_id).text('Yes');
+        }else{
+          $(table_data_id).text('No');
+        }
+
+      }
+
+      function removeSelectedImage(el, strain, plot, sign, stage){
+        
+        if(stage=='prefinal'){
+          id = strain + '-' + plot + '-' + sign + '-prefinal';
+          $('#' + id).remove();
+          id = strain + '-' + plot + '-' + sign + '-final';
+          $('#' + id).remove();
+        }else{
+          id = strain + '-' + plot + '-' + sign + '-final';
+          console.log(id);
+          $('#' + id).remove();
+        }
+      }
+
+      
+    </script>
+  </body>
+</html>
