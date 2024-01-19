@@ -1,0 +1,158 @@
+---
+title: "Stage1 HTML Generator"
+output: html_document
+date: "2023-07-20"
+params:
+  filename: ""
+  all_plots_file: ""
+  sign: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(gtools)
+library(fANCOVA)
+library(pbapply)
+library(readxl)
+library(data.table)
+library(stringr)
+library(gt)
+library(rlist)
+library(purrr)
+library(cowplot)
+library(scales)
+
+source("DataExtraction.R")
+source("LOESS_Functions.R")
+source("getWTdf.R")
+source("Comparison_Functions.R")
+source("plotFunctions.R")
+```
+
+# Load saved data frames
+
+```{r}
+load(params$filename)
+```
+
+# Strains
+
+```{r}
+print(strains)
+```
+
+# Generate plots:
+
+```{r, include=FALSE}
+panel_label_font_size <- 30
+plot_line_width <- 1
+wt_line_color <- "darkblue"
+serum_line_color <- "darkgoldenrod2"
+strain_line_color <- "red2"
+y_axis_scale <- 10^6
+axis_labels_font_size <- 15
+plot_dot_width <- 5
+
+plots_lines<- lapply(strains, plot_strain, normdata=data.corrected,  sig_data = wt_fits_sigs)
+```
+
+# Filter for Detected Compounds and with Level <= 3
+
+```{r, warning=FALSE}
+isDetected <- function(X) return (data_levels[X[[3]]-1, 3] <=3 & !str_detect(X[[1]][[1]], "Var."))
+plot1 <- Filter(isDetected, plots_lines[[1]])
+plot2 <- Filter(isDetected, plots_lines[[2]])
+plot3 <- Filter(isDetected, plots_lines[[3]])
+plot4 <- Filter(isDetected, plots_lines[[4]])
+plot5 <- Filter(isDetected, plots_lines[[5]])
+
+```
+
+# Add the levels to the plots
+
+```{r}
+addLevel<-function(X){
+  level <- data_levels[X[[3]]-1, 3]
+  original_title <- data_levels[X[[3]]-1, 2]
+  title = sprintf("%s (%s)", if_else(original_title=="", X[[1]], original_title), level)
+  title <- str_wrap(stringi::stri_enc_toutf8(title, is_unknown_8bit = TRUE), width=30)
+  X[[2]]$labels$title <- title
+  return (X)
+}
+
+plot1 <- map(plot1, addLevel)
+plot2 <- map(plot2, addLevel)
+plot3 <- map(plot3, addLevel)
+plot4 <- map(plot4, addLevel)
+plot5 <- map(plot5, addLevel)
+
+```
+
+Save the combined dataframe
+
+```{r}
+allplots <- c(
+  list(list(plot1)),
+  list(list(plot2)),
+  list(list(plot3)),
+  list(list(plot4)),
+  list(list(plot5))
+  )
+
+# get strains
+stn <- c()
+# get signs
+sign <- c()
+# get plot num
+plot_num <- c()
+# formula
+formulas <- c()
+# level
+levels <- c()
+# name
+compounds <- c()
+
+# compound number in the pos or negative original data frames
+compound_numbers <- c()
+
+for(i in c(1:length(strains))){
+  for(j in c(1:1)){
+    for(k in c(1:length(allplots[[i]][[j]]))){
+      stn[length(stn)+1] <- i
+      sign[length(sign)+1] <- j
+      plot_num[length(plot_num)+1] <- k
+      compound <- allplots[[i]][[j]][[k]][[1]]
+      compound_num <- allplots[[i]][[j]][[k]][[3]]
+      compounds[length(compounds)+1] <- compound
+      compound_numbers[length(compound_numbers)+1] <- compound_num
+      if(j == 1){
+        formula <- data_levels$Formula[compound_num-1]
+        level <- data_levels$level[compound_num-1]
+      }
+      if(j == 2){
+      }
+      formulas[length(formulas)+1] <- formula
+      levels[length(levels)+1] <- level
+    }
+  }
+}
+alldata_df <- data.frame(Strain=stn, Sign=sign, Plt=plot_num, Formula=formulas, Level=levels, Name=compounds, CompoundNumber=compound_numbers)
+write.csv(alldata_df, params$all_plots_file)
+
+```
+
+```{r}
+library(pander)
+pandoc.header(params$sign, 4)
+```
+
+
+```{r}
+plot1
+```
+
