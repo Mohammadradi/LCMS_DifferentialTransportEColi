@@ -42,7 +42,8 @@ plot_corr_n <- function(n, raw_data, r_order, first, last){
 
 normalize_n <- function(n, raw_data, r_order, first, last){
   df <- merged_df(n, raw_data, r_order, first, last)
-  dfNorm <- normalize_vals(df)
+  #dfNorm <- normalize_vals(df)
+  dfNorm <- df
   compound <- names(dfNorm[3])
   dfNormVals <- dfNorm[,c(1,4)]
   names(dfNormVals) <- c("Name", compound)
@@ -50,20 +51,23 @@ normalize_n <- function(n, raw_data, r_order, first, last){
 }
 
 #loess_correct takes input of raw data, run order dataframe and inidces of where the sample data starts and ends (first, last)
-# and returns a Loesscorrected dataframe as well as printing an example graph (default of col. 100)
-
+# and returns a Loess corrected dataframe as well as printing an example graph (default of col. 100)
 loess_correct <- function(raw_data, r_order, first, last, n=100){
   # progress bar
   pb <- txtProgressBar(min = 0, max = nrow(raw_data), style = 3, width = 50, char = "=")
-  #cleaned_names <- names(raw_data)[c(first:last)] # sapply(names(raw_data)[c(first:last)], clean_names2)
-  pos_norm <- data.frame(Name = names(raw_data)[c(first:last)])
+  cleaned_names <- sapply(names(raw_data)[c(first:last)], clean_names2)
+  pos_norm <- data.frame(Name = cleaned_names)
   i <- 0
   for(compound in c(1:nrow(raw_data))){
     i <- i + 1
     setTxtProgressBar(pb, i)
     normDF <- suppressWarnings(normalize_n(compound, raw_data, r_order, first, last))
+    #print(pos_norm)
     pos_norm <- merge(pos_norm, normDF, by="Name")
   }
   #plot_corr_n(n, raw_data, r_order, first, last)
   return(pos_norm)
 }
+
+
+

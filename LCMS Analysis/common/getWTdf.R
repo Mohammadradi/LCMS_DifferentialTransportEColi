@@ -42,7 +42,6 @@ lin.fit <- function(df_wt){
 }
 
 exp.fit <- function(df_wt){
-  write.csv2(df_wt, "test.csv")
   fitExp <- lm(log(Area) ~ Time, data=df_wt)
 }
 

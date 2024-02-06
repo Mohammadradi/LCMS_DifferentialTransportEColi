@@ -1,0 +1,224 @@
+---
+title: "Stage1 HTML Generator"
+output: html_document
+date: "2023-07-20"
+params:
+  data_file: "data.rda"
+  csv_file: "data.csv"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(gtools)
+library(fANCOVA)
+library(pbapply)
+library(readxl)
+library(data.table)
+library(stringr)
+library(gt)
+library(rlist)
+library(purrr)
+library(cowplot)
+library(scales)
+
+# source("common/DataExtraction.R")
+# source("common/LOESS_Functions_simple.R")
+# source("common/getWTdf.R")
+# source("common/Comparison_Functions.R")
+# source("common/plotFunctions.R")
+# source("common/Preprocessor.R")
+```
+
+# Load saved data frames
+
+```{r}
+load(params$data_file)
+```
+
+# Strains
+
+```{r}
+print(strains)
+```
+
+# Generate plots:
+
+```{r, include=FALSE}
+panel_label_font_size <- 30
+plot_line_width <- 1
+wt_line_color <- "darkblue"
+serum_line_color <- "darkgoldenrod2"
+strain_line_color <- "red2"
+y_axis_scale <- 10^6
+axis_labels_font_size <- 15
+plot_dot_width <- 5
+
+plots_neg_lines<- lapply(strains, plot_strain, normdata=neg_data.corrected,  sig_data = wt_fits_sigs_neg)
+plots_pos_lines <- lapply(strains, plot_strain, normdata=pos_data.corrected,  sig_data = wt_fits_sigs_pos)
+```
+
+# Filter for Detected Compounds and with Level <= 3
+
+```{r, warning=FALSE}
+isDetected <- function(X) return (neg_data_levels[X[[3]]-1, 3] <=3 & !str_detect(X[[1]][[1]], "Var."))
+plot1.neg <- Filter(isDetected, plots_neg_lines[[1]])
+plot2.neg <- Filter(isDetected, plots_neg_lines[[2]])
+plot3.neg <- Filter(isDetected, plots_neg_lines[[3]])
+plot4.neg <- Filter(isDetected, plots_neg_lines[[4]])
+plot5.neg <- Filter(isDetected, plots_neg_lines[[5]])
+
+isDetectedPos <- function(X) return (pos_data_levels[X[[3]]-1, 3] <=3 & !str_detect(X[[1]][[1]], "Var."))
+plot1.pos <- Filter(isDetectedPos, plots_pos_lines[[1]])
+plot2.pos <- Filter(isDetectedPos, plots_pos_lines[[2]])
+plot3.pos <- Filter(isDetectedPos, plots_pos_lines[[3]])
+plot4.pos <- Filter(isDetectedPos, plots_pos_lines[[4]])
+plot5.pos <- Filter(isDetectedPos, plots_pos_lines[[5]])
+```
+
+# Add the levels to the plots
+
+```{r}
+addLevelNeg<-function(X){
+  level <- neg_data_levels[X[[3]]-1, 3]
+  original_title <- neg_data_levels[X[[3]]-1, 2]
+  title = sprintf("%s (%s)", if_else(original_title=="", X[[1]], original_title), level)
+  title <- str_wrap(title, width=30)
+  X[[2]]$labels$title <- title
+  return (X)
+}
+
+addLevelPos<-function(X){
+  level <- pos_data_levels[X[[3]]-1, 3]
+  original_title <- pos_data_levels[X[[3]]-1, 2]
+  title = sprintf("%s (%s)", if_else(original_title=="", X[[1]], original_title), level)
+  title <- str_wrap(title, width=30)
+  X[[2]]$labels$title <- title
+  return (X)
+}
+
+plot1.neg <- map(plot1.neg, addLevelNeg)
+plot2.neg <- map(plot2.neg, addLevelNeg)
+plot3.neg <- map(plot3.neg, addLevelNeg)
+plot4.neg <- map(plot4.neg, addLevelNeg)
+plot5.neg <- map(plot5.neg, addLevelNeg)
+
+plot1.pos <- map(plot1.pos, addLevelPos)
+plot2.pos <- map(plot2.pos, addLevelPos)
+plot3.pos <- map(plot3.pos, addLevelPos)
+plot4.pos <- map(plot4.pos, addLevelPos)
+plot5.pos <- map(plot5.pos, addLevelPos)
+
+```
+
+Save the combined dataframe
+
+```{r}
+allplots <- c(
+  list(list(plot1.neg, plot1.pos)),
+  list(list(plot2.neg, plot2.pos)),
+  list(list(plot3.neg, plot3.pos)),
+  list(list(plot4.neg, plot4.pos)),
+  list(list(plot5.neg, plot5.pos))
+  )
+
+# get strains
+stn <- c()
+# get signs
+sign <- c()
+# get plot num
+plot_num <- c()
+# formula
+formulas <- c()
+# level
+levels <- c()
+# name
+compounds <- c()
+
+# compound number in the pos or negative original data frames
+compound_numbers <- c()
+
+for(i in c(1:length(strains))){
+  for(j in c(1:2)){
+    if(length(allplots[[i]][[j]]) > 0){
+      for(k in c(1:length(allplots[[i]][[j]]))){
+        stn[length(stn)+1] <- i
+        sign[length(sign)+1] <- j
+        plot_num[length(plot_num)+1] <- k
+        compound <- allplots[[i]][[j]][[k]][[1]]
+        compound_num <- allplots[[i]][[j]][[k]][[3]]
+        compounds[length(compounds)+1] <- compound
+        compound_numbers[length(compound_numbers)+1] <- compound_num
+        if(j == 1){
+          formula <- neg_data_levels$Formula[compound_num-1]
+          level <- neg_data_levels$level[compound_num-1]
+        }
+        if(j == 2){
+          formula <- pos_data_levels$Formula[compound_num-1]
+          level <- pos_data_levels$level[compound_num-1]
+        }
+        formulas[length(formulas)+1] <- formula
+        levels[length(levels)+1] <- level
+      }
+    }
+  }
+}
+
+alldata_df <- data.frame(Strain=stn, Sign=sign, Plt=plot_num, Formula=formulas, Level=levels, Name=compounds, CompoundNumber=compound_numbers)
+write.csv(alldata_df, params$csv_file)
+
+```
+
+# Strain 1 - Neg
+```{r}
+plot1.neg
+```
+
+# Strain 1 - Pos
+```{r}
+plot1.pos
+```
+
+# Strain 2 - Neg
+```{r}
+plot2.neg
+```
+
+# Strain 2 - Pos
+```{r}
+plot2.pos
+```
+
+# Strain 3 - Neg
+```{r}
+plot3.neg
+```
+
+# Strain 3 - Pos
+```{r}
+plot3.pos
+```
+
+# Strain 4 - Neg
+```{r}
+plot4.neg
+```
+
+# Strain 4 - Pos
+```{r}
+plot4.pos
+```
+
+# Strain 5 - Neg
+```{r}
+plot5.neg
+```
+
+# Strain 5 - Pos
+```{r}
+plot5.pos
+```
