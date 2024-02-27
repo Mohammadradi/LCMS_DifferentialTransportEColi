@@ -15,7 +15,7 @@ library(purrr)
 library(cowplot)
 library(scales)
 
-setwd("/Users/moosabonomali/Freelancer/SmartBio/DataAnalysis")
+setwd("set path")
 source("common/DataExtraction.R")
 source("common/LOESS_Functions_simple.R")
 source("common/getWTdf.R")
